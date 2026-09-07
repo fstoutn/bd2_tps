@@ -1,0 +1,88 @@
+-- Motor: PostgreSQL
+
+BEGIN;
+
+-- 1. TIPOS ENUMERADOS (Dominios cerrados)
+CREATE TYPE rol_usuario AS ENUM ('CLIENTE', 'ADMIN');
+CREATE TYPE estado_pedido AS ENUM ('PENDIENTE', 'EN_PREPARACION', 'ENTREGADO', 'CANCELADO');
+CREATE TYPE forma_pago AS ENUM ('EFECTIVO', 'TARJETA', 'TRANSFERENCIA');
+
+-- 2. TABLA CATEGORIA
+CREATE TABLE categoria (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 3. TABLA PRODUCTO
+CREATE TABLE producto (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    precio_lista NUMERIC(12, 2) NOT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    categoria_id BIGINT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    
+    -- Restricciones: Se usa RESTRICT para evitar que se elimine una categoría que tiene productos asociados.
+    CONSTRAINT fk_producto_categoria FOREIGN KEY (categoria_id) 
+        REFERENCES categoria(id) ON DELETE RESTRICT,
+    CONSTRAINT chk_producto_precio CHECK (precio_lista >= 0),
+    CONSTRAINT chk_producto_stock CHECK (stock >= 0)
+);
+
+-- 4. TABLA USUARIO
+CREATE TABLE usuario (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    rol rol_usuario NOT NULL DEFAULT 'CLIENTE',
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 5. TABLA PEDIDO
+CREATE TABLE pedido (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    usuario_id BIGINT NOT NULL,
+    fecha_hora TIMESTAMPTZ NOT NULL DEFAULT now(),
+    forma_pago forma_pago NOT NULL,
+    estado estado_pedido NOT NULL DEFAULT 'PENDIENTE',
+    total NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    
+    -- Restricciones: RESTRICT evita borrar un usuario que ya posee un historial de ventas registradas.
+    CONSTRAINT fk_pedido_usuario FOREIGN KEY (usuario_id) 
+        REFERENCES usuario(id) ON DELETE RESTRICT,
+    CONSTRAINT chk_pedido_total CHECK (total >= 0)
+);
+
+-- 6. TABLA DETALLE_PEDIDO (Entidad asociativa)
+CREATE TABLE detalle_pedido (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    pedido_id BIGINT NOT NULL,
+    producto_id BIGINT NOT NULL,
+    cantidad INT NOT NULL,
+    precio_unitario NUMERIC(12, 2) NOT NULL,
+    subtotal NUMERIC(12, 2) NOT NULL,
+    
+    -- Restricciones: CASCADE borra el detalle si la cabecera del pedido se elimina físicamente. 
+    -- RESTRICT impide borrar un producto que ya figura en ventas pasadas (preserva auditoría).
+    CONSTRAINT fk_detalle_pedido FOREIGN KEY (pedido_id) 
+        REFERENCES pedido(id) ON DELETE CASCADE,
+    CONSTRAINT fk_detalle_producto FOREIGN KEY (producto_id) 
+        REFERENCES producto(id) ON DELETE RESTRICT,
+    CONSTRAINT chk_detalle_cantidad CHECK (cantidad > 0),
+    CONSTRAINT chk_detalle_precio CHECK (precio_unitario >= 0),
+    CONSTRAINT chk_detalle_subtotal CHECK (subtotal >= 0),
+    CONSTRAINT uq_pedido_producto UNIQUE (pedido_id, producto_id)
+);
+
+-- 7. ÍNDICES DE RENDIMIENTO JUSTIFICADOS
+-- Optimiza la búsqueda de los pedidos realizados por un cliente específico
+CREATE INDEX idx_pedido_usuario ON pedido(usuario_id);
+
+-- Acelera el listado de productos activos filtrados por categoría
+CREATE INDEX idx_producto_categoria_activo ON producto(categoria_id) WHERE activo = TRUE;
+
+COMMIT;
