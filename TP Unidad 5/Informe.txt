@@ -1,0 +1,260 @@
+INFORME DE AVANCE - TRABAJO PRACTICO UNIDAD 5
+Base de desarrollo: food_store_tp4
+Motor: PostgreSQL 17.11
+Usuario administrador utilizado: postgres
+
+Este documento reúne los pasos probados, sus resultados y las decisiones tomadas.
+Se actualizará a medida que se completen las partes B a E. No contiene contraseñas ni
+datos personales reales.
+
+PARTE A - ROLES Y PERMISOS
+
+Entorno y ejecución
+- Se abrió una sesión de psql conectado a food_store_tp4 como postgres.
+- Se ejecutó el script sql/roles.sql dentro de una transacción.
+- Las sentencias de creación de roles, GRANT, ALTER DEFAULT PRIVILEGES y permisos de
+  secuencia terminaron sin errores.
+- La transacción finalizó correctamente con COMMIT.
+- Se asignaron contraseñas interactivamente con \password para app_web y admin_datos;
+  no se copiaron ni guardaron las contraseñas en archivos.
+
+Verificación de roles
+- \du mostró los roles admin_datos, app_web, postgres, rol_app_escritura,
+  rol_app_lectura, rol_reportes y rol_soporte.
+- Los roles funcionales aparecen como Cannot login, lo cual es esperado para roles
+  de grupo.
+- app_web y admin_datos aparecen sin atributos en \du; se comprobó adicionalmente:
+
+  SELECT rolname, rolcanlogin
+  FROM pg_roles
+  WHERE rolname IN ('app_web', 'admin_datos');
+
+- Resultado observado: app_web = true y admin_datos = true. Ambos roles pueden iniciar
+  sesión. La contraseña se configuró por separado.
+
+Verificación de privilegios por tabla
+- La consulta a information_schema.role_table_grants devolvió 54 filas.
+- admin_datos tiene los privilegios de tabla concedidos con ALL PRIVILEGES
+  (DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE y UPDATE) sobre las cinco
+  tablas del esquema public: categoria, detalle_pedido, pedido, producto y usuario.
+- rol_app_lectura tiene SELECT sobre las cinco tablas.
+- rol_app_escritura tiene INSERT y UPDATE en producto, pedido y detalle_pedido.
+- rol_soporte tiene SELECT completo en categoria, producto, pedido y detalle_pedido.
+- rol_reportes tiene SELECT completo en categoria, producto, pedido y detalle_pedido.
+- Los permisos restringidos por columna sobre usuario no se muestran como privilegios
+  de tabla completa; se verificaron mediante role_column_grants.
+- app_web hereda rol_app_lectura y rol_app_escritura; admin_datos hereda los roles
+  funcionales indicados en el script. La salida de grants por tabla lista al rol que
+  recibe cada permiso, no necesariamente sus miembros.
+
+Verificación de privilegios por columna
+- La consulta a information_schema.role_column_grants terminó correctamente.
+- Para rol_app_escritura sobre usuario se observaron SELECT en las columnas de consulta
+  e INSERT/UPDATE solamente en nombre y email.
+- Para rol_soporte sobre usuario se observaron SELECT en las columnas permitidas y
+  UPDATE solamente en activo.
+- Para rol_reportes sobre usuario se observaron SELECT solamente en rol y created_at.
+- Los permisos de tabla completa de lectura y los de admin_datos también se reflejan
+  como privilegios por columna en esta vista; por eso la salida es extensa.
+
+Corrección de mínimo privilegio y verificación posterior
+- Se revisó la salida inicial guardada en
+  `docs/verificacion_roles_parte_a.txt`. La evidencia confirmó que admin_datos tenía
+  ALL PRIVILEGES en las tablas del negocio y usuario_anon, y que los privilegios por
+  defecto también concedían ALL.
+- Se actualizó `sql/roles.sql`: admin_datos recibe SELECT, INSERT, UPDATE y DELETE,
+  sin REFERENCES, TRIGGER ni TRUNCATE. Se agregó un REVOKE explícito para retirar
+  esos privilegios excedentes de las tablas existentes. Si usuario_anon existe, el
+  script también limita sus privilegios a CRUD.
+- Los privilegios por defecto de admin_datos para futuras tablas creadas por postgres
+  quedaron limitados a SELECT, INSERT, UPDATE y DELETE. ALTER DEFAULT PRIVILEGES no
+  se aplica automáticamente a objetos creados por otro propietario.
+- Se volvió a ejecutar el script como postgres en food_store_tp4. Terminó con COMMIT.
+  Los NOTICE de membresías existentes indican que los GRANT de roles ya estaban
+  aplicados; no son errores.
+- La verificación posterior guardada en
+  `docs/verificacion_roles_parte_a_final.txt` muestra CRUD para admin_datos en las
+  cinco tablas del negocio y usuario_anon. has_table_privilege devolvió false para
+  TRUNCATE en categoria, TRIGGER en producto y REFERENCES en usuario. \ddp muestra
+  que el default de admin_datos es arwd (SELECT, INSERT, UPDATE, DELETE), sin los
+  privilegios retirados.
+
+Pendientes para cerrar Parte A
+- La verificación final quedó guardada en
+  `docs/verificacion_roles_parte_a_completa.txt`. Incluye \du, role_table_grants,
+  role_column_grants, acceso efectivo de app_web a usuario y \ddp.
+- La salida confirma que app_web tiene permisos efectivos limitados en usuario:
+  SELECT de id, rol, activo y created_at, sin SELECT de nombre ni email; tampoco
+  tiene SELECT de tabla completa. La restricción es por columna, no por fila.
+- rol_app_lectura tiene SELECT en categoria, producto, pedido, detalle_pedido y
+  usuario_anon; sobre usuario, solo id, rol, activo y created_at.
+- rol_app_escritura tiene INSERT/UPDATE en producto, pedido y detalle_pedido; sobre
+  usuario puede insertar/actualizar solo nombre y email y consultar id, rol, activo
+  y created_at. rol_soporte puede consultar nombre/email y actualizar solo activo;
+  rol_reportes consulta rol y created_at en usuario y tiene SELECT de las tablas de
+  negocio previstas.
+- admin_datos tiene CRUD en las cinco tablas de negocio y usuario_anon.
+- \ddp devolvió cero filas: no hay privilegios por defecto adicionales para tablas o
+  secuencias futuras. Se deben revisar y otorgar explícitamente los permisos a cada
+  objeto nuevo.
+- La auditoría de roles se realizó en esta sesión con Copilot. Confirmó que los
+  permisos actuales coinciden con el script y encontró dos decisiones a documentar:
+  el SELECT de rol_app_lectura sobre todas las columnas de usuario, heredado por
+  app_web, expone datos personales a la aplicación; además, el default global
+  anterior podía dar acceso a tablas futuras sensibles. Se decidió corregir el
+  segundo punto; el alcance de lectura de usuario debe quedar explícitamente
+  justificado en la documentación.
+- La auditoría de Copilot debe registrarse con prompt, respuesta y validación humana
+  en BITACORA.md al completar la Parte E. No se debe atribuir esta revisión a
+  OpenCode, ya que no fue ejecutada allí.
+
+Estado de la Parte A: roles y permisos verificados después de aplicar el script
+revisado; los defaults quedaron sin grants automáticos y el acceso de app_web a
+usuario se limitó por columna. Para el cierre documental general, registrar esta
+revisión de Copilot y su validación humana en BITACORA.md durante la Parte E.
+
+PARTE B - AUDITORIA
+
+Estado: completada y documentada en `informe_parte_b.md`.
+
+Se verificaron `log_connections`, `log_disconnections`, `log_statement` y
+`log_line_prefix`; se ejecutaron lectura, inserción, actualización, ROLLBACK e
+intento fallido de autenticación; y se capturó un fragmento del log real. Después
+de la prueba se restauró `log_statement` a `mod`. El informe describe qué metadatos
+aporta el log nativo, sus límites para reconstruir cambios de negocio y por qué el
+archivo debe limitarse a DBA y personal autorizado de seguridad/operaciones. Se
+incluyó evidencia adicional de conexión autenticada y desconexión. Los datos
+identificables se retiraron del informe y los fragmentos se presentan con origen y
+PID sustituidos.
+
+PARTE C - SIMULACRO DE INCIDENTE
+
+No se encontró fn_autenticar ni fn_resetear_password en los TP previos ni una columna
+de contraseña en el esquema de Food Store. Para poder realizar la consigna sin añadir
+credenciales a la tabla real usuario, se eligió reconstruir fn_autenticar para el
+laboratorio mediante sql/reconstruir_autenticacion_lab.sql.
+
+La reconstrucción usa una tabla auxiliar usuario_auth_lab, una identidad sintética y
+una contraseña almacenada como hash mediante pgcrypto. No altera la tabla usuario y
+no se afirma que sea idéntica a la función vista en Clase 2. El script revoca los
+privilegios heredados a la tabla auxiliar y permite a app_web ejecutar la función sin
+leer directamente el hash. La reconstrucción ya se ejecutó en food_store_tp4 y
+\df+ confirmó la firma booleana y el permiso EXECUTE para app_web.
+
+Avance observado en la terminal
+- La reconstrucción de autenticación se ejecutó correctamente y \df+ confirmó la
+  función (ver salida de psql).
+- Las llamadas del punto 3 devolvieron los resultados esperados: las credenciales
+  incorrectas fallaron y la sintética válida autenticó.
+- El punto 4, `SELECT * FROM public.usuario ORDER BY id`, se ejecutó correctamente y
+  devolvió 20.005 filas en 0,003 segundos, según la salida de psql informada por el
+  estudiante. El log registra la sentencia, no el conteo ni su duración; no se
+  incluyen las filas personales en la evidencia compartida.
+- En el punto 5, conectado como `app_web`, se intentó ejecutar
+  `GRANT admin_datos TO app_web;`. PostgreSQL lo rechazó con el mensaje:
+  `se ha denegado el permiso para otorgar el rol «admin_datos»`.
+  El detalle indicó que solo los roles con la opción ADMIN sobre `admin_datos`
+  pueden otorgarlo. Resultado esperado: app_web no pudo escalar sus privilegios.
+- El punto 6 devolvió cero filas: app_web no aparece como miembro de admin_datos,
+  confirmando que el intento rechazado no agregó la membresía.
+- No se copian aquí nombres ni emails de la salida: contienen datos identificables.
+  Para la evidencia que se comparta o envíe a una IA, conservar solo un extracto
+  anonimizado y necesario para reconstruir el evento.
+- La consola muestra algunos caracteres acentuados incorrectamente (por ejemplo,
+  caracteres descompuestos en el nombre). Esto parece un problema de codificación de
+  la consola de Windows y no demuestra por sí mismo que el dato almacenado esté dañado.
+
+Estado de Parte C: simulacro, evidencia de log anonimizada, respuesta completa
+recibida de OpenCode, contraste con los resultados observados y decisión humana de
+contención documentados en `docs/respuesta_opencode_parte_c.md` y
+`docs/analisis_incidente_parte_c.md`.
+
+Configuración de logging revisada para capturar la Parte C
+- Antes de cambiar la configuración, `SHOW log_statement` devolvió `mod`, mientras
+  `log_connections` y `log_disconnections` devolvieron `on`.
+- Se aplicó el cambio temporal a `log_statement = all` y el usuario informa que
+  `SHOW log_statement` devuelve `all`, `log_connections` devuelve `t` y
+  `log_disconnections` devuelve `t` (ambas opciones activadas).
+- `pg_current_logfile()` informó la ruta relativa
+  `log/postgresql-2026-10-07_075226.log`.
+- La secuencia de la Parte C se repitió con `log_statement = all`; el log muestra las
+  llamadas, la lectura y el intento de escalamiento.
+- Al exportar el fragmento, quitar o reemplazar cualquier contraseña que aparezca en
+  las llamadas SQL registradas, aunque sea la clave ficticia del laboratorio. Después
+  de la captura, restaurar `log_statement = mod`.
+- En la captura compartida se observa la clave sintética dentro de una sentencia
+  registrada; fue reemplazada por `[CLAVE_REDACCIÓN]` en el extracto anonimizado. No
+  reutilizar esa clave en otros sistemas y no compartir el log original sin sanitizar.
+- El extracto muestra la sentencia del intento de escalamiento y el error del servidor.
+  Los resultados booleanos `false`, `false` y `true` provinieron de la salida de psql,
+  no del log; se consignan como evidencia de ejecución separada.
+
+Actualización de la evidencia de Parte C
+- La autenticación sintética falló dos veces y tuvo éxito una vez, según las salidas
+  observadas en psql.
+- La lectura masiva de usuario se ejecutó como app_web y quedó registrada. No se
+  incluyen las filas personales en la evidencia compartida.
+- El intento `GRANT admin_datos TO app_web` quedó registrado y fue rechazado.
+- La verificación desde postgres devolvió cero filas para la membresía app_web ->
+  admin_datos.
+- La ruta relativa informada por `pg_current_logfile()` fue
+  `log/postgresql-2026-10-07_075226.log`, bajo el directorio de datos de PostgreSQL.
+- El usuario informa que restauró `log_statement` a `mod` después de la captura;
+  conservar la salida de `SHOW log_statement` como evidencia de restauración.
+
+PARTE D - ANONIMIZACION Y EQUIVALENCIA
+
+Preparación y prueba completadas en food_store_tp4:
+- `sql/usuario_anon.sql`: crea una tabla de datos sintéticos, no copia IDs/nombres/emails
+  reales y se detiene si `public.usuario_anon` ya existe para evitar sobrescribirla.
+- `sql/verificar_equivalencia_usuario_anon.sql`: produce ambos agregados y lista las
+  diferencias; la última consulta debe devolver cero filas.
+
+Resultados observados:
+- `SELECT to_regclass('public.usuario_anon')` devolvió NULL, así que no existía una
+  tabla previa que se pudiera sobrescribir.
+- La ejecución del script de creación terminó con BEGIN, DO, SELECT 20005, ALTER TABLE,
+  ALTER TABLE y COMMIT. Se creó la tabla anónima con 20.005 filas.
+- El agregado sobre usuario devolvió CLIENTE / 2026-09-01 00:00:00-03 / 20.004 y
+  ADMIN / 2026-09-01 00:00:00-03 / 1.
+- El agregado sobre usuario_anon devolvió los mismos dos grupos y conteos.
+- La consulta de diferencias devolvió 0 filas.
+
+Conclusión: equivalencia agregada comprobada por rol y mes de alta. La tabla anonimizada
+conserva 20.005 filas sin copiar IDs, nombres ni emails reales. La evidencia detallada
+está en `docs/verificacion_equivalencia.md`.
+
+Respuesta sobre datos para IA: no deben exponerse nombres completos, emails reales,
+direcciones, identificadores personales, credenciales, información sensible de
+clientes/pedidos ni combinaciones de atributos que permitan reidentificar a una
+persona. La evidencia se anonimiza en el entorno controlado y se comparte solo con
+los datos mínimos necesarios. Esta respuesta también quedó documentada en
+`docs/verificacion_equivalencia.md`.
+
+PARTE E - BITACORA Y CIERRE
+
+Estado: bitácora creada en `BITACORA.md` con registros para A-D, caso de recomendación
+insegura y validaciones humanas. Se crearon commits locales separados para A-D; el
+commit de E incluye la bitácora, este informe y `Probar.txt`. Las guías de consignas
+y el PDF indicados por el estudiante se dejaron fuera. El push y la verificación final
+de `git status` quedan pendientes de ejecutar.
+
+ACLARACION SOBRE LOS ARCHIVOS DEL TP
+
+Parte A.txt, Parte B.txt, Parte C.txt, Parte D.txt, Parte E.txt y Probar.txt son guías
+de trabajo y comandos; no sustituyen los entregables que exige la consigna. Para
+completar el TP también hay que crear y conservar scripts SQL, documentos, salidas y
+BITACORA.md correspondientes:
+
+- Parte A: sql/roles.sql, especificación requirements/design, salida de verificación y
+  registro en BITACORA.md.
+- Parte B: sql/auditoria_test.sql, informe de configuración, log real capturado y
+  respuestas de análisis.
+- Parte C: sql/reconstruir_autenticacion_lab.sql, sql/simulacro_incidente.sql, log
+  anonimizado, respuesta de OpenCode, contraste con la secuencia ejecutada e informe
+  de contención.
+- Parte D: sql/usuario_anon.sql, consultas real/anónima y evidencia de equivalencia.
+- Parte E: BITACORA.md consolidada e historial Git por partes.
+
+Por tanto, no alcanza con ejecutar solamente los comandos de B a E: hay que producir
+los archivos de evidencia solicitados y completar las pruebas sobre la base.

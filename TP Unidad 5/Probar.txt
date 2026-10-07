@@ -1,0 +1,197 @@
+COMANDOS PARA PROBAR CONTRA LA BASE DE FOOD STORE
+
+A) PARTE A - Roles y permisos
+
+1. Conectarse a food_store_tp4. psql solicita la contraseña de forma interactiva:
+psql -U postgres -d food_store_tp4 -W
+
+2. Ejecutar el script de roles:
+\i 'C:/Users/HETIGOX/Desktop/Todos los tp/bd2_tps-main/TP Unidad 5/sql/roles.sql'
+
+3. Asignar contraseñas sin guardarlas en archivos:
+\password app_web
+\password admin_datos
+
+4. Ver roles creados:
+\du
+
+5. Ver permisos por tabla:
+SELECT grantee, table_schema, table_name, privilege_type
+FROM information_schema.role_table_grants
+WHERE grantee IN ('rol_app_lectura','rol_app_escritura','rol_soporte','rol_reportes','app_web','admin_datos')
+ORDER BY grantee, table_name, privilege_type;
+
+6. Ver permisos por columna:
+SELECT grantee, table_schema, table_name, column_name, privilege_type
+FROM information_schema.role_column_grants
+WHERE grantee IN ('rol_app_lectura','rol_app_escritura','rol_soporte','rol_reportes','app_web','admin_datos')
+ORDER BY grantee, table_name, column_name, privilege_type;
+
+B) PARTE B - Auditoría
+
+1. Activar parámetros del servidor:
+ALTER SYSTEM SET log_connections = on;
+ALTER SYSTEM SET log_disconnections = on;
+ALTER SYSTEM SET log_statement = 'all';
+ALTER SYSTEM SET log_line_prefix = '%m [%p] %u@%d %h ';
+SELECT pg_reload_conf();
+
+2. Verificar configuración:
+SHOW log_connections;
+SHOW log_disconnections;
+SHOW log_statement;
+SHOW log_line_prefix;
+
+Se usa 'all' temporalmente para que también quede registrada la lectura SELECT. Al
+terminar la captura, volver al nivel mínimo requerido por la consigna:
+ALTER SYSTEM SET log_statement = 'mod';
+SELECT pg_reload_conf();
+
+3. Ejecutar prueba de lectura/escritura y revertir los cambios de datos:
+BEGIN;
+SELECT id, nombre, email FROM public.usuario LIMIT 5;
+INSERT INTO public.categoria (nombre, activo)
+VALUES ('Auditoria TP Unidad 5 20261006', true)
+ON CONFLICT (nombre) DO NOTHING;
+UPDATE public.producto
+SET precio_lista = precio_lista + 5
+WHERE id = (SELECT MIN(id) FROM public.producto);
+ROLLBACK;
+
+4. Intento de login fallido:
+psql -U usuario_invalido -d food_store_tp4 -h localhost -W
+
+5. Consultar log:
+SHOW log_directory;
+SHOW log_filename;
+
+Windows/PowerShell: revisar el archivo de log del servidor PostgreSQL desde la ruta devuelta arriba.
+Linux/macOS: tail -n 100 /ruta/del/log/postgresql.log
+
+C) PARTE C - Simulacro de incidente
+
+1. Reconstruir la autenticación aislada para el laboratorio como postgres:
+\i 'C:/Users/HETIGOX/Desktop/Todos los tp/bd2_tps-main/TP Unidad 5/sql/reconstruir_autenticacion_lab.sql'
+
+La función usa exclusivamente demo@foodstore.test y una contraseña ficticia; no modifica
+la tabla real usuario ni almacena claves en texto plano. Requiere que la extensión
+pgcrypto esté disponible.
+
+2. Confirmar la firma:
+\df+ public.fn_autenticar
+
+3. Probar dos fallos y un acceso exitoso usando solo la cuenta sintética:
+SELECT public.fn_autenticar('demo@foodstore.test', 'clave_incorrecta_1');
+SELECT public.fn_autenticar('demo@foodstore.test', 'clave_incorrecta_2');
+SELECT public.fn_autenticar('demo@foodstore.test', 'Demo-U5-Temporal-2026!');
+
+4. Lectura masiva en el entorno propio:
+SELECT * FROM public.usuario ORDER BY id;
+
+5. En otra consola, iniciar sesión como app_web e intentar escalar privilegios:
+psql -U app_web -d food_store_tp4 -h localhost -W
+GRANT admin_datos TO app_web;
+
+Se espera un error de privilegios insuficientes. Ejecutar el GRANT como postgres no
+prueba el límite de permisos de app_web. Si el intento inesperadamente tiene éxito,
+conectarse como postgres y revocar la membresía:
+REVOKE admin_datos FROM app_web;
+
+6. Desde la sesión postgres, verificar las membresías:
+SELECT r.rolname AS role_name,
+       m.rolname AS member_name
+FROM pg_auth_members am
+JOIN pg_roles r ON r.oid = am.roleid
+JOIN pg_roles m ON m.oid = am.member
+WHERE r.rolname = 'admin_datos';
+
+7. Repetir la secuencia con logging completo y extraer el fragmento del incidente.
+
+En la sesión actual de postgres, confirmar que los SELECT se están registrando:
+SHOW log_statement;
+
+Debe devolver all. Si devuelve otro valor:
+ALTER SYSTEM SET log_statement = 'all';
+SELECT pg_reload_conf();
+SHOW log_statement;
+
+Abrir otra ventana de PowerShell y conectarse como app_web:
+psql -U app_web -d food_store_tp4 -h localhost -W
+
+Dentro de esa sesión ejecutar, en este orden:
+SELECT current_user, current_database();
+SELECT public.fn_autenticar('demo@foodstore.test', 'clave_incorrecta_1');
+SELECT public.fn_autenticar('demo@foodstore.test', 'clave_incorrecta_2');
+SELECT public.fn_autenticar('demo@foodstore.test', 'Demo-U5-Temporal-2026!');
+
+Evitar que la lectura masiva vuelva a imprimir los datos personales en la consola:
+\o NUL
+SELECT * FROM public.usuario ORDER BY id;
+\o
+
+Intentar el escalamiento (debe fallar como antes):
+GRANT admin_datos TO app_web;
+
+Anotar el error y salir:
+\q
+
+En una sesión conectada como postgres, confirmar que app_web no quedó miembro:
+SELECT r.rolname AS role_name, m.rolname AS member_name
+FROM pg_auth_members am
+JOIN pg_roles r ON r.oid = am.roleid
+JOIN pg_roles m ON m.oid = am.member
+WHERE r.rolname = 'admin_datos' AND m.rolname = 'app_web';
+
+Debe devolver 0 filas. Obtener la ruta absoluta del log:
+SELECT current_setting('data_directory') || '/' || pg_current_logfile() AS log_path;
+
+Restaurar inmediatamente el nivel de logging pedido para la auditoría normal:
+ALTER SYSTEM SET log_statement = 'mod';
+SELECT pg_reload_conf();
+SHOW log_statement;
+
+Salir de psql y, en PowerShell, leer el fragmento reciente usando la ruta absoluta
+obtenida arriba:
+Get-Content -Path "RUTA_ABSOLUTA_DEL_LOG" -Tail 300
+
+Guardar solo el tramo del simulacro. Antes de compartirlo o mandarlo a una IA,
+reemplazar emails/nombres/IPs identificables y redactar la contraseña ficticia en
+cualquier sentencia registrada. No compartir el log completo sin revisarlo.
+
+D) PARTE D - Anonimización y equivalencia
+
+1. Consultar si la tabla ya existe:
+SELECT to_regclass('public.usuario_anon') AS tabla_existente;
+
+2. Si el resultado es NULL, crear la tabla anonimizada:
+\i 'C:/Users/HETIGOX/Desktop/Todos los tp/bd2_tps-main/TP Unidad 5/sql/usuario_anon.sql'
+
+El script se detiene sin cambios si la tabla ya existe. Inspeccionar/resguardar cualquier
+tabla previa; no borrarla sin decidir primero cómo conservarla.
+
+3. Ejecutar consultas reales, anonimizadas y comparación:
+\i 'C:/Users/HETIGOX/Desktop/Todos los tp/bd2_tps-main/TP Unidad 5/sql/verificar_equivalencia_usuario_anon.sql'
+
+Las dos tablas agregadas deben mostrar los mismos grupos y conteos; la última consulta
+del script debe devolver 0 filas.
+
+E) PARTE E - Bitácora y Git
+
+1. Revisar commits:
+git log --oneline --decorate --graph
+
+2. Revisar estado del repositorio:
+git status
+
+3. Preparar BITACORA.md con tabla de prompts y validaciones.
+
+Observación final
+Los comandos anteriores deben adaptarse a tu entorno local, especialmente:
+- la ruta del log del servidor
+- la firma real de fn_autenticar y las credenciales sintéticas de prueba
+
+La base indicada es food_store_tp4. La contraseña de postgres se ingresa con -W y
+no queda guardada en este archivo. Los roles son globales al clúster; los permisos
+de tablas y secuencias del script se aplican en food_store_tp4. No ejecutar en producción.
+
+SELECT current_user, current_database();
