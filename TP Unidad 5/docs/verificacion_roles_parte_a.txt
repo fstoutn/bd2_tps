@@ -1,0 +1,97 @@
+                                 List of roles
+     Role name     |                         Attributes                         
+-------------------+------------------------------------------------------------
+ admin_datos       | 
+ app_web           | 
+ postgres          | Superuser, Create role, Create DB, Replication, Bypass RLS
+ rol_app_escritura | Cannot login
+ rol_app_lectura   | Cannot login
+ rol_reportes      | Cannot login
+ rol_soporte       | Cannot login
+
+      rolname      | rolcanlogin | rolsuper | rolcreatedb | rolcreaterole | rolinherit 
+-------------------+-------------+----------+-------------+---------------+------------
+ admin_datos       | t           | f        | f           | f             | t
+ app_web           | t           | f        | f           | f             | t
+ rol_app_escritura | f           | f        | f           | f             | t
+ rol_app_lectura   | f           | f        | f           | f             | t
+ rol_reportes      | f           | f        | f           | f             | t
+ rol_soporte       | f           | f        | f           | f             | t
+(6 rows)
+
+   rol_concedido   |   miembro   | admin_option 
+-------------------+-------------+--------------
+ rol_app_escritura | admin_datos | f
+ rol_app_escritura | app_web     | f
+ rol_app_lectura   | admin_datos | f
+ rol_app_lectura   | app_web     | f
+ rol_reportes      | admin_datos | f
+ rol_soporte       | admin_datos | f
+(6 rows)
+
+        rol        |     tabla      |                          privilegios                          
+-------------------+----------------+---------------------------------------------------------------
+ admin_datos       | categoria      | DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE
+ admin_datos       | detalle_pedido | DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE
+ admin_datos       | pedido         | DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE
+ admin_datos       | producto       | DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE
+ admin_datos       | usuario        | DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE
+ admin_datos       | usuario_anon   | DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE
+ rol_app_escritura | detalle_pedido | INSERT, UPDATE
+ rol_app_escritura | pedido         | INSERT, UPDATE
+ rol_app_escritura | producto       | INSERT, UPDATE
+ rol_app_lectura   | categoria      | SELECT
+ rol_app_lectura   | detalle_pedido | SELECT
+ rol_app_lectura   | pedido         | SELECT
+ rol_app_lectura   | producto       | SELECT
+ rol_app_lectura   | usuario        | SELECT
+ rol_app_lectura   | usuario_anon   | SELECT
+ rol_reportes      | categoria      | SELECT
+ rol_reportes      | detalle_pedido | SELECT
+ rol_reportes      | pedido         | SELECT
+ rol_reportes      | producto       | SELECT
+ rol_soporte       | categoria      | SELECT
+ rol_soporte       | detalle_pedido | SELECT
+ rol_soporte       | pedido         | SELECT
+ rol_soporte       | producto       | SELECT
+(23 rows)
+
+        rol        |  columna   |            privilegios             
+-------------------+------------+------------------------------------
+ admin_datos       | activo     | INSERT, REFERENCES, SELECT, UPDATE
+ admin_datos       | created_at | INSERT, REFERENCES, SELECT, UPDATE
+ admin_datos       | email      | INSERT, REFERENCES, SELECT, UPDATE
+ admin_datos       | id         | INSERT, REFERENCES, SELECT, UPDATE
+ admin_datos       | nombre     | INSERT, REFERENCES, SELECT, UPDATE
+ admin_datos       | rol        | INSERT, REFERENCES, SELECT, UPDATE
+ rol_app_escritura | activo     | SELECT
+ rol_app_escritura | created_at | SELECT
+ rol_app_escritura | email      | INSERT, SELECT, UPDATE
+ rol_app_escritura | id         | SELECT
+ rol_app_escritura | nombre     | INSERT, SELECT, UPDATE
+ rol_app_escritura | rol        | SELECT
+ rol_app_lectura   | activo     | SELECT
+ rol_app_lectura   | created_at | SELECT
+ rol_app_lectura   | email      | SELECT
+ rol_app_lectura   | id         | SELECT
+ rol_app_lectura   | nombre     | SELECT
+ rol_app_lectura   | rol        | SELECT
+ rol_reportes      | created_at | SELECT
+ rol_reportes      | rol        | SELECT
+ rol_soporte       | activo     | SELECT, UPDATE
+ rol_soporte       | created_at | SELECT
+ rol_soporte       | email      | SELECT
+ rol_soporte       | id         | SELECT
+ rol_soporte       | nombre     | SELECT
+ rol_soporte       | rol        | SELECT
+(26 rows)
+
+                  Default access privileges
+  Owner   | Schema |   Type   |       Access privileges       
+----------+--------+----------+-------------------------------
+ postgres | public | sequence | rol_app_escritura=rU/postgres+
+          |        |          | admin_datos=rU/postgres
+ postgres | public | table    | rol_app_lectura=r/postgres   +
+          |        |          | admin_datos=arwdDxtm/postgres
+(2 rows)
+

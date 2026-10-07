@@ -1,0 +1,145 @@
+ current_user | current_database 
+--------------+------------------
+ postgres     | food_store_tp4
+(1 row)
+
+BEGIN
+DO
+DO
+DO
+DO
+DO
+DO
+ALTER ROLE
+ALTER ROLE
+GRANT ROLE
+GRANT ROLE
+GRANT ROLE
+GRANT ROLE
+GRANT ROLE
+GRANT ROLE
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+REVOKE
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+REVOKE
+GRANT
+GRANT
+GRANT
+REVOKE
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+DO
+GRANT
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+GRANT
+GRANT
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+COMMIT
+                                 List of roles
+     Role name     |                         Attributes                         
+-------------------+------------------------------------------------------------
+ admin_datos       | 
+ app_web           | 
+ postgres          | Superuser, Create role, Create DB, Replication, Bypass RLS
+ rol_app_escritura | Cannot login
+ rol_app_lectura   | Cannot login
+ rol_reportes      | Cannot login
+ rol_soporte       | Cannot login
+
+        rol        |     tabla      |          privilegios           
+-------------------+----------------+--------------------------------
+ admin_datos       | categoria      | DELETE, INSERT, SELECT, UPDATE
+ admin_datos       | detalle_pedido | DELETE, INSERT, SELECT, UPDATE
+ admin_datos       | pedido         | DELETE, INSERT, SELECT, UPDATE
+ admin_datos       | producto       | DELETE, INSERT, SELECT, UPDATE
+ admin_datos       | usuario        | DELETE, INSERT, SELECT, UPDATE
+ admin_datos       | usuario_anon   | DELETE, INSERT, SELECT, UPDATE
+ rol_app_escritura | detalle_pedido | INSERT, UPDATE
+ rol_app_escritura | pedido         | INSERT, UPDATE
+ rol_app_escritura | producto       | INSERT, UPDATE
+ rol_app_lectura   | categoria      | SELECT
+ rol_app_lectura   | detalle_pedido | SELECT
+ rol_app_lectura   | pedido         | SELECT
+ rol_app_lectura   | producto       | SELECT
+ rol_app_lectura   | usuario_anon   | SELECT
+ rol_reportes      | categoria      | SELECT
+ rol_reportes      | detalle_pedido | SELECT
+ rol_reportes      | pedido         | SELECT
+ rol_reportes      | producto       | SELECT
+ rol_soporte       | categoria      | SELECT
+ rol_soporte       | detalle_pedido | SELECT
+ rol_soporte       | pedido         | SELECT
+ rol_soporte       | producto       | SELECT
+(22 rows)
+
+        rol        |  columna   |      privilegios       
+-------------------+------------+------------------------
+ admin_datos       | activo     | INSERT, SELECT, UPDATE
+ admin_datos       | created_at | INSERT, SELECT, UPDATE
+ admin_datos       | email      | INSERT, SELECT, UPDATE
+ admin_datos       | id         | INSERT, SELECT, UPDATE
+ admin_datos       | nombre     | INSERT, SELECT, UPDATE
+ admin_datos       | rol        | INSERT, SELECT, UPDATE
+ rol_app_escritura | activo     | SELECT
+ rol_app_escritura | created_at | SELECT
+ rol_app_escritura | email      | INSERT, UPDATE
+ rol_app_escritura | id         | SELECT
+ rol_app_escritura | nombre     | INSERT, UPDATE
+ rol_app_escritura | rol        | SELECT
+ rol_app_lectura   | activo     | SELECT
+ rol_app_lectura   | created_at | SELECT
+ rol_app_lectura   | id         | SELECT
+ rol_app_lectura   | rol        | SELECT
+ rol_reportes      | created_at | SELECT
+ rol_reportes      | rol        | SELECT
+ rol_soporte       | activo     | SELECT, UPDATE
+ rol_soporte       | created_at | SELECT
+ rol_soporte       | email      | SELECT
+ rol_soporte       | id         | SELECT
+ rol_soporte       | nombre     | SELECT
+ rol_soporte       | rol        | SELECT
+(24 rows)
+
+ select_tabla_completa | select_id | select_rol | select_activo | select_created_at | select_nombre | select_email 
+-----------------------+-----------+------------+---------------+-------------------+---------------+--------------
+ f                     | t         | t          | t             | t                 | f             | f
+(1 row)
+
+         Default access privileges
+ Owner | Schema | Type | Access privileges 
+-------+--------+------+-------------------
+(0 rows)
+

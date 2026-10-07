@@ -1,0 +1,93 @@
+ current_user | current_database 
+--------------+------------------
+ postgres     | food_store_tp4
+(1 row)
+
+BEGIN
+DO
+DO
+DO
+DO
+DO
+DO
+ALTER ROLE
+ALTER ROLE
+GRANT ROLE
+GRANT ROLE
+GRANT ROLE
+GRANT ROLE
+GRANT ROLE
+GRANT ROLE
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+REVOKE
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+DO
+GRANT
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+GRANT
+GRANT
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+COMMIT
+     tabla      |          privilegios           
+----------------+--------------------------------
+ categoria      | DELETE, INSERT, SELECT, UPDATE
+ detalle_pedido | DELETE, INSERT, SELECT, UPDATE
+ pedido         | DELETE, INSERT, SELECT, UPDATE
+ producto       | DELETE, INSERT, SELECT, UPDATE
+ usuario        | DELETE, INSERT, SELECT, UPDATE
+ usuario_anon   | DELETE, INSERT, SELECT, UPDATE
+(6 rows)
+
+ truncate_categoria | trigger_producto | references_usuario 
+--------------------+------------------+--------------------
+ f                  | f                | f
+(1 row)
+
+                  Default access privileges
+  Owner   | Schema |   Type   |       Access privileges       
+----------+--------+----------+-------------------------------
+ postgres | public | sequence | rol_app_escritura=rU/postgres+
+          |        |          | admin_datos=rU/postgres
+ postgres | public | table    | rol_app_lectura=r/postgres   +
+          |        |          | admin_datos=arwd/postgres
+(2 rows)
+
