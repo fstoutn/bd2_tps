@@ -1,0 +1,25 @@
+## Consulta 1 - Facturación por categoría y mes
+- **Especificación:** Creada en `specs/spec_consulta1_facturacion.md`.
+- **Herramienta:** Kiro/OpenCode.
+- **Propuesta recibida:** Creación de índices en claves foráneas de `detalle_pedido` y columna de fecha en `pedido`.
+- **Decisión:** Aceptada y aplicada en PostgreSQL.
+
+## Consulta 2 - Top 5 productos más vendidos
+- **Especificación:** Creada en `specs/spec_consulta2_top_productos.md`.
+- **Herramienta:** Kiro/OpenCode.
+- **Propuesta recibida:** Creación de índice compuesto en las columnas `(producto_id, cantidad)` de la tabla `detalle_pedido`.
+- **Decisión:** Aceptada y aplicada en PostgreSQL.
+
+
+## Parte B - Vistas para Reportes del Sistema
+- **Especificación:** Creada en `specs/spec_vistas.md`.
+- **Herramienta:** Kiro/OpenCode.
+- **Propuesta recibida:** Vistas `vw_productos_vigentes`, `vw_pedidos_usuario` y `vw_detalle_pedido_producto`.
+- **Decisión:** Aceptada y guardada en `views.sql`. Se validó la equivalencia de resultados contra consultas manuales escritas en SQL y se cumplió con el ocultamiento de la columna sensible `usuario.contrasena`.
+
+
+## Parte C - Vista Materializada
+- **Especificación:** Creada en `specs/spec_vista_materializada.md`.
+- **Herramienta:** OpenCode.
+- **Propuesta recibida:** Implementación de la vista materializada `mv_facturacion_categoria_mes` con opción `WITH DATA` e índice único `idx_mv_facturacion_cat_mes` sobre `(anio, mes, categoria_id)`.
+- **Decisión:** Aceptada y guardada en `views.sql`. Se probó el comando `REFRESH MATERIALIZED VIEW CONCURRENTLY` y se documentó la mejora de tiempo de respuesta en `informe_mediciones.md`.
