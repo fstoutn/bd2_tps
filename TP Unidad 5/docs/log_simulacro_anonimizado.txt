@@ -1,0 +1,43 @@
+Fragmento anonimizado del log del simulacro - Parte C
+Base: food_store_tp4
+Fecha/hora del servidor: 2026-10-07 (zona -03)
+
+Nota: Se reemplazaron el PID y el origen local por etiquetas. La clave sintética
+registrada por PostgreSQL se redactó. No se incluye la salida de filas de usuario.
+El log original mostró caracteres acentuados mal decodificados en la consola; los
+mensajes de error se transcriben aquí en español normalizado, sin cambiar su sentido.
+
+2026-10-07 08:39:31.852 -03 [PID-A] app_web@food_store_tp4 [ORIGEN_LOCAL]
+LOG: conexión autenticada: identidad=app_web método=scram-sha-256
+
+2026-10-07 08:39:46.550 -03 [PID-A] app_web@food_store_tp4 [ORIGEN_LOCAL]
+LOG: sentencia: SELECT current_user, current_database();
+
+2026-10-07 08:39:58.501 -03 [PID-A] app_web@food_store_tp4 [ORIGEN_LOCAL]
+LOG: sentencia: SELECT public.fn_autenticar('[USUARIO_SINTETICO]', '[CLAVE_REDACCIÓN]');
+
+2026-10-07 08:40:05.591 -03 [PID-A] app_web@food_store_tp4 [ORIGEN_LOCAL]
+LOG: sentencia: SELECT public.fn_autenticar('[USUARIO_SINTETICO]', '[CLAVE_REDACCIÓN]');
+
+2026-10-07 08:40:10.960 -03 [PID-A] app_web@food_store_tp4 [ORIGEN_LOCAL]
+LOG: sentencia: SELECT public.fn_autenticar('[USUARIO_SINTETICO]', '[CLAVE_REDACCIÓN]');
+
+2026-10-07 08:40:23.685 -03 [PID-A] app_web@food_store_tp4 [ORIGEN_LOCAL]
+LOG: sentencia: SELECT * FROM public.usuario ORDER BY id;
+
+2026-10-07 08:40:35.634 -03 [PID-A] app_web@food_store_tp4 [ORIGEN_LOCAL]
+LOG: sentencia: GRANT admin_datos TO app_web;
+ERROR: permiso denegado para otorgar el rol admin_datos
+DETAIL: solo los roles con la opción ADMIN sobre admin_datos pueden otorgarlo
+
+2026-10-07 08:40:35.634 -03 [PID-A] app_web@food_store_tp4 [ORIGEN_LOCAL]
+LOG: sentencia que provocó el error: GRANT admin_datos TO app_web;
+
+Resultado confirmado por separado en la consola:
+- Las dos autenticaciones con clave incorrecta devolvieron false.
+- La autenticación sintética correcta devolvió true.
+- El SELECT masivo se ejecutó.
+- El GRANT fue rechazado; la consulta de membresía posterior devolvió cero filas.
+
+Este extracto omite eventos ajenos al simulacro y no sustituye el archivo de log
+original, que debe permanecer protegido y no compartirse sin anonimización.
