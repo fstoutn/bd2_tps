@@ -60,7 +60,9 @@ El commit de Parte E incluye esta bitácora, el informe general y la guía opera
 Los archivos de entrega incluidos se revisaron selectivamente; no se agregó el log
 original sin anonimizar.
 
-Los commits se crean localmente primero y se publican en `origin` al terminar esta
-revisión. Después del push, `git log --oneline --decorate --graph` debe mostrar los
-cinco commits de A–E y `git status` debe confirmar que los cambios entregables están
-sin modificar; los archivos de consignas excluidos pueden permanecer sin seguimiento.
+Los cinco commits de A–E se publicaron en `origin`. Después se registró el commit
+`6b5b228` para eliminar un archivo incorrecto. La última verificación informada
+mostró `main` sincronizada con `origin/main` y el árbol limpio. La reformulación
+posterior de `Informe.txt` y esta actualización de la bitácora son cambios locales
+nuevos y todavía deben agregarse y publicarse. Los archivos de consignas excluidos
+pueden permanecer fuera del repositorio.
