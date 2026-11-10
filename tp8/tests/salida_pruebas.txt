@@ -1,0 +1,11 @@
+SQLite: 3.46.1 | CASOS OK: 9
+1.c / C1 OK 6 productos visibles localmente, COMMIT guarda 1 pedido e items; ROLLBACK deja 0 filas
+C7 OK Cantidad 0: CHECK constraint failed; ID 999999: FOREIGN KEY constraint failed; sin filas nuevas
+C2 OK Precio 100000 -> 110000: CONFLICTO; aceptación + nueva solicitud UUID: SIMULADO_APROBADO; solicitud vieja sigue CONFLICTO
+C3 OK Se piden 9 Napolitanas con stock servidor 8: RECHAZADO
+C4 OK Carne tombstone: RECHAZADO; conservada en cache pero oculta en catalogo
+C5 OK Coca 1.5L, mismo precio, disponible, stock suficiente: SIMULADO_APROBADO (no venta)
+C6 OK UUID duplicado: UNIQUE constraint failed; segunda evaluacion no cambia estados
+EXTRA OK Borrador sin items: RECHAZADO
+INTEGRIDAD OK PRAGMA integrity_check=ok y foreign_key_check=vacío
+BASE: /mnt/data/food-store/movil/foodstore_movil.db

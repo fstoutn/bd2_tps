@@ -1,0 +1,7 @@
+id,nombre,precio_centavos,stock,disponible,eliminado,fecha_copia
+1,Muzzarella,100000,10,1,0,2026-11-10
+2,Napolitana,150000,8,1,0,2026-11-10
+4,Carne,35000,9,1,0,2026-11-10
+7,Coca 1.5L,80000,15,1,0,2026-11-10
+8,Agua mineral,40000,20,1,0,2026-11-10
+9,Flan casero,60000,5,1,0,2026-11-10

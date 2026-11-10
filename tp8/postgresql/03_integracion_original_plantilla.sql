@@ -1,0 +1,11 @@
+-- PLANTILLA: adaptar a la estructura verificada del equipo. NO ejecutar sin revisar.
+-- Del TP7 se conoce la tabla 'producto', pero NO se verificaron sus nombres de columnas.
+-- Reemplazar schema_real y nombres_de_campo de ser necesario (y forma de baja logica).
+-- CREATE OR REPLACE VIEW public.v_snapshot_movil AS
+-- SELECT id, nombre, ROUND(precio::numeric * 100)::bigint AS precio_centavos,
+--        stock::integer AS stock,
+--        CASE WHEN disponible THEN 1 ELSE 0 END AS disponible,
+--        CASE WHEN eliminado THEN 1 ELSE 0 END AS eliminado,
+--        CURRENT_TIMESTAMP::DATE::text AS fecha_copia
+-- FROM public.producto;
+-- \copy (SELECT * FROM public.v_snapshot_movil) TO 'servidor_snapshot.csv' CSV HEADER

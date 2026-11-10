@@ -1,0 +1,52 @@
+{
+  "motor": "Python sqlite3 / SQLite 3.50.4",
+  "fecha_ejecucion": "generado al ejecutar tests/verificar.py",
+  "pruebas": [
+    {
+      "caso": "1.c / C1",
+      "resultado": "OK",
+      "detalle": "6 productos visibles localmente, COMMIT guarda 1 pedido e items; ROLLBACK deja 0 filas"
+    },
+    {
+      "caso": "C7",
+      "resultado": "OK",
+      "detalle": "Cantidad 0: CHECK constraint failed; ID 999999: FOREIGN KEY constraint failed; sin filas nuevas"
+    },
+    {
+      "caso": "C2",
+      "resultado": "OK",
+      "detalle": "Precio 100000 -> 110000: CONFLICTO; aceptación + nueva solicitud UUID: SIMULADO_APROBADO; solicitud vieja sigue CONFLICTO"
+    },
+    {
+      "caso": "C3",
+      "resultado": "OK",
+      "detalle": "Se piden 9 Napolitanas con stock servidor 8: RECHAZADO"
+    },
+    {
+      "caso": "C4",
+      "resultado": "OK",
+      "detalle": "Carne tombstone: RECHAZADO; conservada en cache pero oculta en catalogo"
+    },
+    {
+      "caso": "C5",
+      "resultado": "OK",
+      "detalle": "Coca 1.5L, mismo precio, disponible, stock suficiente: SIMULADO_APROBADO (no venta)"
+    },
+    {
+      "caso": "C6",
+      "resultado": "OK",
+      "detalle": "UUID duplicado: UNIQUE constraint failed; segunda evaluacion no cambia estados"
+    },
+    {
+      "caso": "EXTRA",
+      "resultado": "OK",
+      "detalle": "Borrador sin items: RECHAZADO"
+    },
+    {
+      "caso": "INTEGRIDAD",
+      "resultado": "OK",
+      "detalle": "PRAGMA integrity_check=ok y foreign_key_check=vacío"
+    }
+  ],
+  "nota": "PostgreSQL no fue ejecutado contra una instancia real. CSV es una muestra de demostración declarada, no exportación comprobada."
+}
